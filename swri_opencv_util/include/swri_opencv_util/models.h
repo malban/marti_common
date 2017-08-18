@@ -42,25 +42,25 @@ namespace swri_opencv_util
   public:
     typedef cv::Mat T;         // An Nx4 float matrix
     typedef cv::Mat M;
-    
+
     explicit Correspondence2d(const T& data) : data_(data) {}
-    
+
     virtual bool GetModel(const std::vector<int32_t>& indices, M& model, double max_error) const = 0;
     int32_t GetInlierCount(const M& model, double max_error);
     void GetInliers(const M& model, double max_error, std::vector<uint32_t>& indices);
     int32_t Size() const { return data_.rows; }
     virtual std::string GetModelString(M& model) const { return ""; }
-    
+
     static void CopyTo(const M& src, M& dst)
     {
       src.copyTo(dst);
     }
-    
+
   protected:
     virtual void CalculateNorms(const M& model, cv::Mat& norms);
-    
+
     const T& data_;
-    
+
     // Buffer matrices to avoid repeated memory allocations.
     cv::Mat norms__;
     cv::Mat predicted__;
@@ -73,14 +73,14 @@ namespace swri_opencv_util
   {
   public:
     enum { MIN_SIZE = 4 };
-    
+
     explicit Homography(const T& data) : Correspondence2d(data) {}
     virtual bool GetModel(const std::vector<int32_t>& indices, M& model, double max_error) const;
-    bool ValidData() const 
-    { 
-      return data_.cols == 4 && data_.rows >= MIN_SIZE && data_.type() == CV_32F; 
+    bool ValidData() const
+    {
+      return data_.cols == 4 && data_.rows >= MIN_SIZE && data_.type() == CV_32F;
     }
-    
+
   protected:
     virtual void CalculateNorms(const M& model, cv::Mat& norms);
   };
@@ -89,12 +89,12 @@ namespace swri_opencv_util
   {
   public:
     enum { MIN_SIZE = 3 };
-    
+
     explicit AffineTransform2d(const T& data) : Correspondence2d(data) {}
     virtual bool GetModel(const std::vector<int32_t>& indices, M& model, double max_error) const;
-    bool ValidData() const 
-    { 
-      return data_.cols == 4 && data_.rows >= MIN_SIZE && data_.type() == CV_32F; 
+    bool ValidData() const
+    {
+      return data_.cols == 4 && data_.rows >= MIN_SIZE && data_.type() == CV_32F;
     }
   };
 
@@ -102,36 +102,122 @@ namespace swri_opencv_util
   {
   public:
     enum { MIN_SIZE = 2 };
-    
+
     explicit RigidTransform2d(const T& data) : Correspondence2d(data) {}
     virtual bool GetModel(const std::vector<int32_t>& indices, M& model, double max_error) const;
-    bool ValidData() const 
-    { 
-      return data_.cols == 4 && data_.rows >= MIN_SIZE && data_.type() == CV_32F; 
+    bool ValidData() const
+    {
+      return data_.cols == 4 && data_.rows >= MIN_SIZE && data_.type() == CV_32F;
     }
   };
-  
+
   class Translation2d : public Correspondence2d
   {
   public:
     enum { MIN_SIZE = 1 };
-    
+
     explicit Translation2d(const T& data) : Correspondence2d(data) {}
     virtual bool GetModel(const std::vector<int32_t>& indices, M& model, double max_error) const;
-    bool ValidData() const 
-    { 
-      return data_.cols == 4 && data_.rows >= MIN_SIZE && data_.type() == CV_32F; 
+    bool ValidData() const
+    {
+      return data_.cols == 4 && data_.rows >= MIN_SIZE && data_.type() == CV_32F;
     }
   };
-  
+
   bool Valid2dPointCorrespondences(
-    const cv::Mat& points1, 
+    const cv::Mat& points1,
     const cv::Mat& points2);
-  
+
   bool ZipCorrespondences(
     const cv::Mat& points1,
     const cv::Mat& points2,
     cv::Mat& correspondences);
+
+  template <class Model>
+  class Fit3d
+  {
+  public:
+    typedef cv::Mat T;         // An Nx3 float matrix
+    typedef Model M;           // A geometric model
+
+    explicit Fit3d(const T& data) : data_(data) {}
+
+    virtual bool GetModel(const std::vector<int32_t>& indices, M& model, double max_error) const = 0;
+    int32_t GetInlierCount(const M& model, double max_error)
+    {
+      CalculateNorms(model, norms__);
+
+      cv::compare(norms__, cv::Scalar(max_error), thresholded__, cv::CMP_LT);
+
+      return cv::countNonZero(thresholded__);
+    }
+
+    void GetInliers(const M& model, double max_error, std::vector<uint32_t>& indices)
+    {
+      CalculateNorms(model, norms__);
+
+      indices.clear();
+      indices.reserve(norms__.rows);
+      double threshold = max_error;
+      for (int i = 0; i < norms__.rows; i++)
+      {
+        if (norms__.at<float>(i) < threshold)
+        {
+          indices.push_back(i);
+        }
+      }
+    }
+
+    int32_t Size() const { return data_.rows; }
+    virtual std::string GetModelString(M& model) const { return ""; }
+
+    static void CopyTo(const M& src, M& dst)
+    {
+      src.copyTo(dst);
+    }
+
+  protected:
+    virtual void CalculateNorms(const M& model, cv::Mat& norms) = 0;
+
+    const T& data_;
+
+    // Buffer matrices to avoid repeated memory allocations.
+    cv::Mat norms__;
+    cv::Mat delta__;
+    cv::Mat thresholded__;
+  };
+
+  struct PlaneModel
+  {
+    PlaneModel() : x(0), y(0), z(0), i(0), j(0), k(0) {}
+    void copyTo(PlaneModel& dst) const
+    {
+      dst = *this;
+    }
+
+    float x, y, z, i, j, k;
+  };
+
+  class PlaneFit : public Fit3d<PlaneModel>
+  {
+  public:
+    enum { MIN_SIZE = 3 };
+
+    PlaneFit(const T& data, float min_angle = 0.2) :
+        Fit3d<PlaneModel>(data),
+        min_angle_(min_angle) {}
+    virtual bool GetModel(const std::vector<int32_t>& indices, M& model, double max_error) const;
+    bool ValidData() const
+    {
+      return data_.cols == 3 && data_.rows >= MIN_SIZE && data_.type() == CV_32F;
+    }
+
+  protected:
+    virtual void CalculateNorms(const M& model, cv::Mat& norms);
+
+    float min_angle_;
+  };
+
 }
 
 #endif  // OPENCV_UTIL_MODELS_H_
