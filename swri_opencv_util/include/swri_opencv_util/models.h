@@ -209,7 +209,7 @@ namespace swri_opencv_util
     virtual bool GetModel(const std::vector<int32_t>& indices, M& model, double max_error) const;
     bool ValidData() const
     {
-      return data_.cols == 3 && data_.rows >= MIN_SIZE && data_.type() == CV_32F;
+      return data_.cols == 1 && data_.rows >= MIN_SIZE && data_.type() == CV_32FC3;
     }
 
   protected:
