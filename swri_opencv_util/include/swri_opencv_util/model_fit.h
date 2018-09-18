@@ -51,6 +51,7 @@ namespace swri_opencv_util
     int32_t& iterations,
     double max_error = 1.0,
     double confidence = 0.9,
+    int32_t min_iterations = 1,
     int32_t max_iterations = 1000,
     swri_math_util::RandomGeneratorPtr rng = swri_math_util::RandomGeneratorPtr())
   {
@@ -69,7 +70,7 @@ namespace swri_opencv_util
 
     Model fit_model(correspondences);
     model = ransac.FitModel(
-      fit_model, max_error, confidence, 1, max_iterations, good_points, iterations);
+      fit_model, max_error, confidence, min_iterations, max_iterations, good_points, iterations);
 
     if (good_points.empty())
     {
@@ -111,6 +112,7 @@ namespace swri_opencv_util
     int32_t& iterations,
     double max_error = 1.0,
     double confidence = 0.9,
+    int32_t min_iterations = 1,
     int32_t max_iterations = 1000,
     swri_math_util::RandomGeneratorPtr rng = swri_math_util::RandomGeneratorPtr());
 
@@ -123,6 +125,7 @@ namespace swri_opencv_util
     int32_t& iterations,
     double max_error = 1.0,
     double confidence = 0.9,
+    int32_t min_iterations = 1,
     int32_t max_iterations = 1000,
     swri_math_util::RandomGeneratorPtr rng = swri_math_util::RandomGeneratorPtr());
 
@@ -138,6 +141,7 @@ namespace swri_opencv_util
     int32_t& iterations,
     double max_error = 1.0,
     double confidence = 0.9,
+    int32_t min_iterations = 1,
     int32_t max_iterations = 1000,
     swri_math_util::RandomGeneratorPtr rng = swri_math_util::RandomGeneratorPtr());
 
@@ -152,6 +156,7 @@ namespace swri_opencv_util
     int32_t& iterations,
     double max_error = 1.0,
     double confidence = 0.9,
+    int32_t min_iterations = 1,
     int32_t max_iterations = 1000,
     swri_math_util::RandomGeneratorPtr rng = swri_math_util::RandomGeneratorPtr());
 

@@ -44,12 +44,13 @@ namespace swri_opencv_util
     int32_t& iterations,
     double max_error,
     double confidence,
+    int32_t min_iterations,
     int32_t max_iterations,
     swri_math_util::RandomGeneratorPtr rng)
   {
     return FindModel2d<Translation2d>(
       points1, points2, inliers1, inliers2, good_points, iterations, max_error,
-      confidence, max_iterations, rng);
+      confidence, min_iterations, max_iterations, rng);
   }
 
   cv::Mat FindRigidTransform2d(
@@ -61,12 +62,13 @@ namespace swri_opencv_util
     int32_t& iterations,
     double max_error,
     double confidence,
+    int32_t min_iterations,
     int32_t max_iterations,
     swri_math_util::RandomGeneratorPtr rng)
   {
     return FindModel2d<RigidTransform2d>(
       points1, points2, inliers1, inliers2, good_points, iterations, max_error,
-      confidence, max_iterations, rng);
+      confidence, min_iterations, max_iterations, rng);
   }
 
   cv::Mat FitRigidTransform2d(const cv::Mat& points1, const cv::Mat& points2)
@@ -133,12 +135,13 @@ namespace swri_opencv_util
     int32_t& iterations,
     double max_error,
     double confidence,
+    int32_t min_iterations,
     int32_t max_iterations,
     swri_math_util::RandomGeneratorPtr rng)
   {
     return FindModel2d<AffineTransform2d>(
       points1, points2, inliers1, inliers2, good_points, iterations, max_error,
-      confidence, max_iterations, rng);
+      confidence, min_iterations, max_iterations, rng);
   }
 
   cv::Mat FindHomography(
@@ -150,12 +153,13 @@ namespace swri_opencv_util
     int32_t& iterations,
     double max_error,
     double confidence,
+    int32_t min_iterations,
     int32_t max_iterations,
     swri_math_util::RandomGeneratorPtr rng)
   {
     return FindModel2d<Homography>(
       points1, points2, inliers1, inliers2, good_points, iterations, max_error,
-      confidence, max_iterations, rng);
+      confidence, min_iterations, max_iterations, rng);
   }
 
   cv::Mat FitAffineTransform2d(const cv::Mat& points1, const cv::Mat& points2)
